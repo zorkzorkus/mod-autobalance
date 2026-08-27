@@ -111,6 +111,7 @@ void AutoBalance_WorldScript::SetInitialWorldSettings()
 
     Enable5MHeroic    = sConfigMgr->GetOption<bool>("AutoBalance.Enable.5MHeroic"   , sConfigMgr->GetOption<bool>("AutoBalance.enable", 1, false));
     Enable10MHeroic   = sConfigMgr->GetOption<bool>("AutoBalance.Enable.10MHeroic"  , sConfigMgr->GetOption<bool>("AutoBalance.enable", 1, false));
+    Enable15MHeroic   = sConfigMgr->GetOption<bool>("AutoBalance.Enable.15MHeroic"  , sConfigMgr->GetOption<bool>("AutoBalance.enable", 1, false));
     Enable25MHeroic   = sConfigMgr->GetOption<bool>("AutoBalance.Enable.25MHeroic"  , sConfigMgr->GetOption<bool>("AutoBalance.enable", 1, false));
     EnableOtherHeroic = sConfigMgr->GetOption<bool>("AutoBalance.Enable.OtherHeroic", sConfigMgr->GetOption<bool>("AutoBalance.enable", 1, false));
 
@@ -179,6 +180,11 @@ void AutoBalance_WorldScript::SetInitialWorldSettings()
     InflectionPointRaid15MCurveFloor         = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15M.CurveFloor", InflectionPointRaidCurveFloor, false);
     InflectionPointRaid15MCurveCeiling       = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15M.CurveCeiling", InflectionPointRaidCurveCeiling, false);
     InflectionPointRaid15MBoss               = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15M.BossModifier", InflectionPointRaidBoss, false);
+
+    InflectionPointRaid15MHeroic             = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15MHeroic", InflectionPointRaidHeroic, false);
+    InflectionPointRaid15MHeroicCurveFloor   = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15MHeroic.CurveFloor", InflectionPointRaidHeroicCurveFloor, false);
+    InflectionPointRaid15MHeroicCurveCeiling = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15MHeroic.CurveCeiling", InflectionPointRaidHeroicCurveCeiling, false);
+    InflectionPointRaid15MHeroicBoss         = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid15MHeroic.BossModifier", InflectionPointRaidHeroicBoss, false);
 
     InflectionPointRaid20M                   = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid20M", InflectionPointRaid, false);
     InflectionPointRaid20MCurveFloor         = sConfigMgr->GetOption<float>("AutoBalance.InflectionPointRaid20M.CurveFloor", InflectionPointRaidCurveFloor, false);
@@ -343,6 +349,24 @@ void AutoBalance_WorldScript::SetInitialWorldSettings()
     StatModifierRaid15M_Boss_CCDuration       = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15M.Boss.CCDuration", StatModifierRaid_Boss_CCDuration, false);
 
     //
+    // 15-player heroic raids
+    //
+
+    StatModifierRaid15MHeroic_Global          = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Global", StatModifierRaidHeroic_Global, false);
+    StatModifierRaid15MHeroic_Health          = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Health", StatModifierRaidHeroic_Health, false);
+    StatModifierRaid15MHeroic_Mana            = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Mana", StatModifierRaidHeroic_Mana, false);
+    StatModifierRaid15MHeroic_Armor           = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Armor", StatModifierRaidHeroic_Armor, false);
+    StatModifierRaid15MHeroic_Damage          = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Damage", StatModifierRaidHeroic_Damage, false);
+    StatModifierRaid15MHeroic_CCDuration      = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.CCDuration", StatModifierRaidHeroic_CCDuration, false);
+
+    StatModifierRaid15MHeroic_Boss_Global     = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.Global", StatModifierRaidHeroic_Boss_Global, false);
+    StatModifierRaid15MHeroic_Boss_Health     = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.Health", StatModifierRaidHeroic_Boss_Health, false);
+    StatModifierRaid15MHeroic_Boss_Mana       = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.Mana", StatModifierRaidHeroic_Boss_Mana, false);
+    StatModifierRaid15MHeroic_Boss_Armor      = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.Armor", StatModifierRaidHeroic_Boss_Armor, false);
+    StatModifierRaid15MHeroic_Boss_Damage     = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.Damage", StatModifierRaidHeroic_Boss_Damage, false);
+    StatModifierRaid15MHeroic_Boss_CCDuration = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid15MHeroic.Boss.CCDuration", StatModifierRaidHeroic_Boss_CCDuration, false);
+
+    //
     // 20-player raids
     //
 
@@ -413,6 +437,126 @@ void AutoBalance_WorldScript::SetInitialWorldSettings()
     StatModifierRaid40M_Boss_Armor            = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid40M.Boss.Armor", StatModifierRaid_Boss_Armor, false);
     StatModifierRaid40M_Boss_Damage           = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid40M.Boss.Damage", StatModifierRaid_Boss_Damage, false);
     StatModifierRaid40M_Boss_CCDuration       = sConfigMgr->GetOption<float>("AutoBalance.StatModifierRaid40M.Boss.CCDuration", StatModifierRaid_Boss_CCDuration, false);
+
+    //
+    // PlayerCountScaling*
+    // Heroic and non-heroic instances of the same size share these settings.
+    // Health/Mana/Armor/CCDuration are weights: multiplier = 1.0 + weight * (players - baseline) / baseline
+    // Damage is the multiplier at the instance's maximum player count; below the baseline it follows
+    // the InflectionPoint-style damage curve shaped by the DamageCurve settings.
+    // A BaselinePlayers value of 0 means "the instance's maximum player count".
+    //
+
+    // shape of the below-baseline damage curve, shared by all instance sizes
+    PlayerCountScalingDamageCurveInflectionPoint = sConfigMgr->GetOption<float>("AutoBalance.PlayerCountScaling.DamageCurve.InflectionPoint", 0.4f, false);
+    PlayerCountScalingDamageCurveFloor           = sConfigMgr->GetOption<float>("AutoBalance.PlayerCountScaling.DamageCurve.Floor", 0.0f, false);
+
+    // 5-player dungeons
+    PlayerCountScaling_Enable                  = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScaling.Enable", true, false);
+    PlayerCountScaling_BaselinePlayers         = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScaling.BaselinePlayers", 0, false);
+    PlayerCountScaling_Health                  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Health", 1.0f, false);
+    PlayerCountScaling_Mana                    = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Mana", 0.0f, false);
+    PlayerCountScaling_Armor                   = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Armor", 0.0f, false);
+    PlayerCountScaling_Damage                  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Damage", 1.05f, false);
+    PlayerCountScaling_CCDuration              = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.CCDuration", 0.0f, false);
+
+    PlayerCountScaling_Boss_Health             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Boss.Health", PlayerCountScaling_Health, false);
+    PlayerCountScaling_Boss_Mana               = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Boss.Mana", PlayerCountScaling_Mana, false);
+    PlayerCountScaling_Boss_Armor              = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Boss.Armor", PlayerCountScaling_Armor, false);
+    PlayerCountScaling_Boss_Damage             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Boss.Damage", PlayerCountScaling_Damage, false);
+    PlayerCountScaling_Boss_CCDuration         = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScaling.Boss.CCDuration", PlayerCountScaling_CCDuration, false);
+
+    // Default for all raids
+    PlayerCountScalingRaid_Enable              = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid.Enable", true, false);
+    PlayerCountScalingRaid_BaselinePlayers     = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid.BaselinePlayers", 0, false);
+    PlayerCountScalingRaid_Health              = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Health", 1.0f, false);
+    PlayerCountScalingRaid_Mana                = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Mana", 0.0f, false);
+    PlayerCountScalingRaid_Armor               = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Armor", 0.0f, false);
+    PlayerCountScalingRaid_Damage              = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Damage", 1.05f, false);
+    PlayerCountScalingRaid_CCDuration          = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.CCDuration", 0.0f, false);
+
+    PlayerCountScalingRaid_Boss_Health         = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Boss.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid_Boss_Mana           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Boss.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid_Boss_Armor          = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Boss.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid_Boss_Damage         = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Boss.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid_Boss_CCDuration     = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid.Boss.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    // 10-player raids
+    PlayerCountScalingRaid10M_Enable           = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid10M.Enable", PlayerCountScalingRaid_Enable, false);
+    PlayerCountScalingRaid10M_BaselinePlayers  = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid10M.BaselinePlayers", PlayerCountScalingRaid_BaselinePlayers, false);
+    PlayerCountScalingRaid10M_Health           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid10M_Mana             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid10M_Armor            = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid10M_Damage           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid10M_CCDuration       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    PlayerCountScalingRaid10M_Boss_Health      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Boss.Health", PlayerCountScalingRaid_Boss_Health, false);
+    PlayerCountScalingRaid10M_Boss_Mana        = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Boss.Mana", PlayerCountScalingRaid_Boss_Mana, false);
+    PlayerCountScalingRaid10M_Boss_Armor       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Boss.Armor", PlayerCountScalingRaid_Boss_Armor, false);
+    PlayerCountScalingRaid10M_Boss_Damage      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Boss.Damage", PlayerCountScalingRaid_Boss_Damage, false);
+    PlayerCountScalingRaid10M_Boss_CCDuration  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid10M.Boss.CCDuration", PlayerCountScalingRaid_Boss_CCDuration, false);
+
+    // 15-player raids
+    // These only exist as 10-player raids widened via MapDifficulty.dbc edits, so
+    // the baseline (the count the content is tuned for) defaults to 10 players.
+    PlayerCountScalingRaid15M_Enable           = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid15M.Enable", PlayerCountScalingRaid_Enable, false);
+    PlayerCountScalingRaid15M_BaselinePlayers  = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid15M.BaselinePlayers", 10, false);
+    PlayerCountScalingRaid15M_Health           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid15M_Mana             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid15M_Armor            = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid15M_Damage           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid15M_CCDuration       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    PlayerCountScalingRaid15M_Boss_Health      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Boss.Health", PlayerCountScalingRaid_Boss_Health, false);
+    PlayerCountScalingRaid15M_Boss_Mana        = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Boss.Mana", PlayerCountScalingRaid_Boss_Mana, false);
+    PlayerCountScalingRaid15M_Boss_Armor       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Boss.Armor", PlayerCountScalingRaid_Boss_Armor, false);
+    PlayerCountScalingRaid15M_Boss_Damage      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Boss.Damage", PlayerCountScalingRaid_Boss_Damage, false);
+    PlayerCountScalingRaid15M_Boss_CCDuration  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid15M.Boss.CCDuration", PlayerCountScalingRaid_Boss_CCDuration, false);
+
+    // 20-player raids
+    PlayerCountScalingRaid20M_Enable           = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid20M.Enable", PlayerCountScalingRaid_Enable, false);
+    PlayerCountScalingRaid20M_BaselinePlayers  = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid20M.BaselinePlayers", PlayerCountScalingRaid_BaselinePlayers, false);
+    PlayerCountScalingRaid20M_Health           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid20M_Mana             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid20M_Armor            = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid20M_Damage           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid20M_CCDuration       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    PlayerCountScalingRaid20M_Boss_Health      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Boss.Health", PlayerCountScalingRaid_Boss_Health, false);
+    PlayerCountScalingRaid20M_Boss_Mana        = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Boss.Mana", PlayerCountScalingRaid_Boss_Mana, false);
+    PlayerCountScalingRaid20M_Boss_Armor       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Boss.Armor", PlayerCountScalingRaid_Boss_Armor, false);
+    PlayerCountScalingRaid20M_Boss_Damage      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Boss.Damage", PlayerCountScalingRaid_Boss_Damage, false);
+    PlayerCountScalingRaid20M_Boss_CCDuration  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid20M.Boss.CCDuration", PlayerCountScalingRaid_Boss_CCDuration, false);
+
+    // 25-player raids
+    PlayerCountScalingRaid25M_Enable           = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid25M.Enable", PlayerCountScalingRaid_Enable, false);
+    PlayerCountScalingRaid25M_BaselinePlayers  = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid25M.BaselinePlayers", PlayerCountScalingRaid_BaselinePlayers, false);
+    PlayerCountScalingRaid25M_Health           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid25M_Mana             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid25M_Armor            = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid25M_Damage           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid25M_CCDuration       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    PlayerCountScalingRaid25M_Boss_Health      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Boss.Health", PlayerCountScalingRaid_Boss_Health, false);
+    PlayerCountScalingRaid25M_Boss_Mana        = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Boss.Mana", PlayerCountScalingRaid_Boss_Mana, false);
+    PlayerCountScalingRaid25M_Boss_Armor       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Boss.Armor", PlayerCountScalingRaid_Boss_Armor, false);
+    PlayerCountScalingRaid25M_Boss_Damage      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Boss.Damage", PlayerCountScalingRaid_Boss_Damage, false);
+    PlayerCountScalingRaid25M_Boss_CCDuration  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid25M.Boss.CCDuration", PlayerCountScalingRaid_Boss_CCDuration, false);
+
+    // 40-player raids
+    PlayerCountScalingRaid40M_Enable           = sConfigMgr->GetOption<bool>  ("AutoBalance.PlayerCountScalingRaid40M.Enable", PlayerCountScalingRaid_Enable, false);
+    PlayerCountScalingRaid40M_BaselinePlayers  = sConfigMgr->GetOption<uint32>("AutoBalance.PlayerCountScalingRaid40M.BaselinePlayers", PlayerCountScalingRaid_BaselinePlayers, false);
+    PlayerCountScalingRaid40M_Health           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Health", PlayerCountScalingRaid_Health, false);
+    PlayerCountScalingRaid40M_Mana             = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Mana", PlayerCountScalingRaid_Mana, false);
+    PlayerCountScalingRaid40M_Armor            = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Armor", PlayerCountScalingRaid_Armor, false);
+    PlayerCountScalingRaid40M_Damage           = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Damage", PlayerCountScalingRaid_Damage, false);
+    PlayerCountScalingRaid40M_CCDuration       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.CCDuration", PlayerCountScalingRaid_CCDuration, false);
+
+    PlayerCountScalingRaid40M_Boss_Health      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Boss.Health", PlayerCountScalingRaid_Boss_Health, false);
+    PlayerCountScalingRaid40M_Boss_Mana        = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Boss.Mana", PlayerCountScalingRaid_Boss_Mana, false);
+    PlayerCountScalingRaid40M_Boss_Armor       = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Boss.Armor", PlayerCountScalingRaid_Boss_Armor, false);
+    PlayerCountScalingRaid40M_Boss_Damage      = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Boss.Damage", PlayerCountScalingRaid_Boss_Damage, false);
+    PlayerCountScalingRaid40M_Boss_CCDuration  = sConfigMgr->GetOption<float> ("AutoBalance.PlayerCountScalingRaid40M.Boss.CCDuration", PlayerCountScalingRaid_Boss_CCDuration, false);
 
     //
     // Modifier Min/Max

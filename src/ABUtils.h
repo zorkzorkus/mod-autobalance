@@ -8,6 +8,7 @@
 #include "ABInflectionPointSettings.h"
 #include "ABLevelScalingDynamicLevelSettings.h"
 #include "ABMapInfo.h"
+#include "ABPlayerCountScalingSettings.h"
 #include "ABStatModifiers.h"
 #include "AutoBalance.h"
 
@@ -29,6 +30,9 @@ float getDefaultMultiplier(Map* map, AutoBalanceInflectionPointSettings inflecti
 int GetForcedNumPlayers(int creatureId);
 World_Multipliers getWorldMultiplier(Map* map, BaseValueType baseValueType);
 AutoBalanceInflectionPointSettings getInflectionPointSettings(InstanceMap* instanceMap, bool isBoss = false);
+AutoBalancePlayerCountScalingSettings getPlayerCountScalingSettings(InstanceMap* instanceMap, bool isBoss = false);
+float getPlayerCountScalingMultiplier(Map* map, float statWeight, uint32 baselinePlayers);
+float getPlayerCountScalingDamageMultiplier(Map* map, float damageAtMaxPlayers, uint32 baselinePlayers);
 void getStatModifiersDebug(Map* map, Creature* creature, std::string message);
 AutoBalanceStatModifiers getStatModifiers(Map* map, Creature* creature = nullptr);
 

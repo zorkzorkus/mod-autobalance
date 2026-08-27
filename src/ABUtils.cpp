@@ -737,6 +737,28 @@ World_Multipliers getWorldMultiplier(Map* map, BaseValueType baseValueType)
     );
 
     //
+    // If per-stat player count scaling is enabled for this map, it replaces the
+    // curve-based multiplier (world multipliers use the non-boss values)
+    //
+    AutoBalancePlayerCountScalingSettings playerCountScalingSettings = getPlayerCountScalingSettings(instanceMap);
+
+    if (playerCountScalingSettings.enabled)
+    {
+        if (baseValueType == BaseValueType::AUTOBALANCE_HEALTH)
+            defaultMultiplier = getPlayerCountScalingMultiplier(map, playerCountScalingSettings.health, playerCountScalingSettings.baselinePlayers);
+        else
+            defaultMultiplier = getPlayerCountScalingDamageMultiplier(map, playerCountScalingSettings.damage, playerCountScalingSettings.baselinePlayers);
+
+        LOG_DEBUG("module.AutoBalance",
+            "AutoBalance::getWorldMultiplier: Map {} ({}) {} | defaultMultiplier ({}) | player count scaling replaces the inflection point curve",
+            map->GetMapName(),
+            avgCreatureLevelRounded,
+            baseValueType == BaseValueType::AUTOBALANCE_HEALTH ? "health" : "damage",
+            defaultMultiplier
+        );
+    }
+
+    //
     // Multiply by the appropriate stat modifiers
     //
     AutoBalanceStatModifiers statModifiers = getStatModifiers(map);
@@ -951,6 +973,12 @@ AutoBalanceInflectionPointSettings getInflectionPointSettings (InstanceMap* inst
             curveFloor       = InflectionPointRaid10MHeroicCurveFloor;
             curveCeiling     = InflectionPointRaid10MHeroicCurveCeiling;
         }
+        else if (maxNumberOfPlayers <= 15)
+        {
+            inflectionValue *= InflectionPointRaid15MHeroic;
+            curveFloor       = InflectionPointRaid15MHeroicCurveFloor;
+            curveCeiling     = InflectionPointRaid15MHeroicCurveCeiling;
+        }
         else if (maxNumberOfPlayers <= 25)
         {
             inflectionValue *= InflectionPointRaid25MHeroic;
@@ -1048,6 +1076,8 @@ AutoBalanceInflectionPointSettings getInflectionPointSettings (InstanceMap* inst
                 bossInflectionPointMultiplier = InflectionPointHeroicBoss;
             else if (maxNumberOfPlayers <= 10)
                 bossInflectionPointMultiplier = InflectionPointRaid10MHeroicBoss;
+            else if (maxNumberOfPlayers <= 15)
+                bossInflectionPointMultiplier = InflectionPointRaid15MHeroicBoss;
             else if (maxNumberOfPlayers <= 25)
                 bossInflectionPointMultiplier = InflectionPointRaid25MHeroicBoss;
             else
@@ -1098,6 +1128,191 @@ AutoBalanceInflectionPointSettings getInflectionPointSettings (InstanceMap* inst
     }
 
     return AutoBalanceInflectionPointSettings(inflectionValue, curveFloor, curveCeiling);
+}
+
+AutoBalancePlayerCountScalingSettings getPlayerCountScalingSettings(InstanceMap* instanceMap, bool isBoss)
+{
+    uint32 maxNumberOfPlayers = instanceMap->GetMaxPlayers();
+
+    //
+    // Heroic and non-heroic instances of the same size deliberately share these
+    // settings: player count scaling only describes how an instance behaves with
+    // a different number of players, independent of its difficulty.
+    //
+
+    if (maxNumberOfPlayers <= 5)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScaling_Enable, PlayerCountScaling_BaselinePlayers,
+                PlayerCountScaling_Boss_Health, PlayerCountScaling_Boss_Mana, PlayerCountScaling_Boss_Armor,
+                PlayerCountScaling_Boss_Damage, PlayerCountScaling_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScaling_Enable, PlayerCountScaling_BaselinePlayers,
+                PlayerCountScaling_Health, PlayerCountScaling_Mana, PlayerCountScaling_Armor,
+                PlayerCountScaling_Damage, PlayerCountScaling_CCDuration);
+    }
+    else if (maxNumberOfPlayers <= 10)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid10M_Enable, PlayerCountScalingRaid10M_BaselinePlayers,
+                PlayerCountScalingRaid10M_Boss_Health, PlayerCountScalingRaid10M_Boss_Mana, PlayerCountScalingRaid10M_Boss_Armor,
+                PlayerCountScalingRaid10M_Boss_Damage, PlayerCountScalingRaid10M_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid10M_Enable, PlayerCountScalingRaid10M_BaselinePlayers,
+                PlayerCountScalingRaid10M_Health, PlayerCountScalingRaid10M_Mana, PlayerCountScalingRaid10M_Armor,
+                PlayerCountScalingRaid10M_Damage, PlayerCountScalingRaid10M_CCDuration);
+    }
+    else if (maxNumberOfPlayers <= 15)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid15M_Enable, PlayerCountScalingRaid15M_BaselinePlayers,
+                PlayerCountScalingRaid15M_Boss_Health, PlayerCountScalingRaid15M_Boss_Mana, PlayerCountScalingRaid15M_Boss_Armor,
+                PlayerCountScalingRaid15M_Boss_Damage, PlayerCountScalingRaid15M_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid15M_Enable, PlayerCountScalingRaid15M_BaselinePlayers,
+                PlayerCountScalingRaid15M_Health, PlayerCountScalingRaid15M_Mana, PlayerCountScalingRaid15M_Armor,
+                PlayerCountScalingRaid15M_Damage, PlayerCountScalingRaid15M_CCDuration);
+    }
+    else if (maxNumberOfPlayers <= 20)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid20M_Enable, PlayerCountScalingRaid20M_BaselinePlayers,
+                PlayerCountScalingRaid20M_Boss_Health, PlayerCountScalingRaid20M_Boss_Mana, PlayerCountScalingRaid20M_Boss_Armor,
+                PlayerCountScalingRaid20M_Boss_Damage, PlayerCountScalingRaid20M_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid20M_Enable, PlayerCountScalingRaid20M_BaselinePlayers,
+                PlayerCountScalingRaid20M_Health, PlayerCountScalingRaid20M_Mana, PlayerCountScalingRaid20M_Armor,
+                PlayerCountScalingRaid20M_Damage, PlayerCountScalingRaid20M_CCDuration);
+    }
+    else if (maxNumberOfPlayers <= 25)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid25M_Enable, PlayerCountScalingRaid25M_BaselinePlayers,
+                PlayerCountScalingRaid25M_Boss_Health, PlayerCountScalingRaid25M_Boss_Mana, PlayerCountScalingRaid25M_Boss_Armor,
+                PlayerCountScalingRaid25M_Boss_Damage, PlayerCountScalingRaid25M_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid25M_Enable, PlayerCountScalingRaid25M_BaselinePlayers,
+                PlayerCountScalingRaid25M_Health, PlayerCountScalingRaid25M_Mana, PlayerCountScalingRaid25M_Armor,
+                PlayerCountScalingRaid25M_Damage, PlayerCountScalingRaid25M_CCDuration);
+    }
+    else if (maxNumberOfPlayers <= 40)
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid40M_Enable, PlayerCountScalingRaid40M_BaselinePlayers,
+                PlayerCountScalingRaid40M_Boss_Health, PlayerCountScalingRaid40M_Boss_Mana, PlayerCountScalingRaid40M_Boss_Armor,
+                PlayerCountScalingRaid40M_Boss_Damage, PlayerCountScalingRaid40M_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid40M_Enable, PlayerCountScalingRaid40M_BaselinePlayers,
+                PlayerCountScalingRaid40M_Health, PlayerCountScalingRaid40M_Mana, PlayerCountScalingRaid40M_Armor,
+                PlayerCountScalingRaid40M_Damage, PlayerCountScalingRaid40M_CCDuration);
+    }
+    else
+    {
+        if (isBoss)
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid_Enable, PlayerCountScalingRaid_BaselinePlayers,
+                PlayerCountScalingRaid_Boss_Health, PlayerCountScalingRaid_Boss_Mana, PlayerCountScalingRaid_Boss_Armor,
+                PlayerCountScalingRaid_Boss_Damage, PlayerCountScalingRaid_Boss_CCDuration);
+        else
+            return AutoBalancePlayerCountScalingSettings(
+                PlayerCountScalingRaid_Enable, PlayerCountScalingRaid_BaselinePlayers,
+                PlayerCountScalingRaid_Health, PlayerCountScalingRaid_Mana, PlayerCountScalingRaid_Armor,
+                PlayerCountScalingRaid_Damage, PlayerCountScalingRaid_CCDuration);
+    }
+}
+
+float getPlayerCountScalingMultiplier(Map* map, float statWeight, uint32 baselinePlayers)
+{
+    //
+    // The weight describes how strongly a stat follows the relative player count:
+    //
+    //   multiplier = 1.0 + statWeight * (players - baseline) / baseline
+    //
+    // At `baseline` players the multiplier is always exactly 1.0 (original stats).
+    // A weight of 1.0 scales the stat proportionally with the group size, 0.2
+    // scales it one fifth as strongly, and 0.0 leaves the stat unchanged at any
+    // player count. The existing Min*Modifier settings still apply on top.
+    //
+
+    uint32 maxNumberOfPlayers = map->ToInstanceMap()->GetMaxPlayers();
+
+    AutoBalanceMapInfo* mapABInfo  = GetMapInfo(map);
+    float adjustedPlayerCount      = mapABInfo->adjustedPlayerCount;
+
+    // never scale above the instance's maximum player count
+    if (adjustedPlayerCount > (float)maxNumberOfPlayers)
+        adjustedPlayerCount = (float)maxNumberOfPlayers;
+
+    // a baseline of 0 means "the instance's maximum player count"
+    float baseline = baselinePlayers ? (float)baselinePlayers : (float)maxNumberOfPlayers;
+
+    float multiplier = 1.0f + (statWeight * ((adjustedPlayerCount - baseline) / baseline));
+
+    return multiplier > 0.0f ? multiplier : 0.0f;
+}
+
+float getPlayerCountScalingDamageMultiplier(Map* map, float damageAtMaxPlayers, uint32 baselinePlayers)
+{
+    //
+    // Damage cannot scale down linearly like health: each player can only tank so
+    // much individual damage, so a nearly-full group should take almost full
+    // damage while a group without a proper composition (1-3 players) needs a
+    // steep reduction. This is exactly the shape of the InflectionPoint tanh
+    // curve, so damage uses it below the baseline:
+    //
+    //   players >= baseline: linear ramp from 1.0 (baseline) to `damageAtMaxPlayers` (instance max)
+    //   players <  baseline: the tanh curve of a baseline-sized instance, normalized to 1.0 at the baseline
+    //
+    // The normalized curve only depends on the RELATIVE player count
+    // (players / baseline), so a single shape fits every instance size. It is
+    // controlled by the global `AutoBalance.PlayerCountScaling.DamageCurve.*`
+    // settings; the default inflection point of 0.4 yields ~95% damage at 80%
+    // of the baseline players.
+    //
+
+    uint32 maxNumberOfPlayers = map->ToInstanceMap()->GetMaxPlayers();
+
+    AutoBalanceMapInfo* mapABInfo  = GetMapInfo(map);
+    float adjustedPlayerCount      = mapABInfo->adjustedPlayerCount;
+
+    // never scale above the instance's maximum player count
+    if (adjustedPlayerCount > (float)maxNumberOfPlayers)
+        adjustedPlayerCount = (float)maxNumberOfPlayers;
+
+    // a baseline of 0 means "the instance's maximum player count"
+    float baseline = baselinePlayers ? (float)baselinePlayers : (float)maxNumberOfPlayers;
+
+    // at or above the baseline: ramp linearly up to `damageAtMaxPlayers` at a full instance
+    if (adjustedPlayerCount >= baseline)
+    {
+        if ((float)maxNumberOfPlayers > baseline)
+            return 1.0f + ((damageAtMaxPlayers - 1.0f) * ((adjustedPlayerCount - baseline) / ((float)maxNumberOfPlayers - baseline)));
+
+        return 1.0f;
+    }
+
+    // below the baseline: same shape as getDefaultMultiplier, expressed in relative
+    // player counts (diff = (size/5) * 1.5 = 0.3 * size cancels the size out)
+    float relativePlayerCount = adjustedPlayerCount / baseline;
+
+    float curve           = (tanh((relativePlayerCount - PlayerCountScalingDamageCurveInflectionPoint) / 0.3f) + 1.0f) / 2.0f;
+    float curveAtBaseline = (tanh((1.0f - PlayerCountScalingDamageCurveInflectionPoint) / 0.3f) + 1.0f) / 2.0f;
+
+    float multiplier = ((curve / curveAtBaseline) * (1.0f - PlayerCountScalingDamageCurveFloor)) + PlayerCountScalingDamageCurveFloor;
+
+    return multiplier > 0.0f ? multiplier : 0.0f;
 }
 
 void getStatModifiersDebug(Map *map, Creature *creature, std::string message)
@@ -1214,6 +1429,31 @@ AutoBalanceStatModifiers getStatModifiers (Map* map, Creature* creature)
                 statModifiers.ccduration = StatModifierRaid10MHeroic_CCDuration;
 
                 getStatModifiersDebug(map, creature, "10 Player Heroic");
+            }
+        }
+        else if (maxNumberOfPlayers <= 15)
+        {
+            if (creature && isBossOrBossSummon(creature))
+            {
+                statModifiers.global     = StatModifierRaid15MHeroic_Boss_Global;
+                statModifiers.health     = StatModifierRaid15MHeroic_Boss_Health;
+                statModifiers.mana       = StatModifierRaid15MHeroic_Boss_Mana;
+                statModifiers.armor      = StatModifierRaid15MHeroic_Boss_Armor;
+                statModifiers.damage     = StatModifierRaid15MHeroic_Boss_Damage;
+                statModifiers.ccduration = StatModifierRaid15MHeroic_Boss_CCDuration;
+
+                getStatModifiersDebug(map, creature, "15 Player Heroic Boss");
+            }
+            else
+            {
+                statModifiers.global     = StatModifierRaid15MHeroic_Global;
+                statModifiers.health     = StatModifierRaid15MHeroic_Health;
+                statModifiers.mana       = StatModifierRaid15MHeroic_Mana;
+                statModifiers.armor      = StatModifierRaid15MHeroic_Armor;
+                statModifiers.damage     = StatModifierRaid15MHeroic_Damage;
+                statModifiers.ccduration = StatModifierRaid15MHeroic_CCDuration;
+
+                getStatModifiersDebug(map, creature, "15 Player Heroic");
             }
         }
         else if (maxNumberOfPlayers <= 25)
@@ -2313,13 +2553,15 @@ bool ShouldMapBeEnabled(Map* map)
         bool sizeDifficultyEnabled;
         if (instanceMap->IsHeroic())
         {
-            //LOG_DEBUG("module.AutoBalance", "AutoBalance::ShouldMapBeEnabled: Heroic Enables - 5:{} 10:{} 25:{} Other:{}",
-            //            Enable5MHeroic, Enable10MHeroic, Enable25MHeroic, EnableOtherHeroic);
+            //LOG_DEBUG("module.AutoBalance", "AutoBalance::ShouldMapBeEnabled: Heroic Enables - 5:{} 10:{} 15:{} 25:{} Other:{}",
+            //            Enable5MHeroic, Enable10MHeroic, Enable15MHeroic, Enable25MHeroic, EnableOtherHeroic);
 
             if (instanceMap->GetMaxPlayers() <= 5)
                 sizeDifficultyEnabled = Enable5MHeroic;
             else if (instanceMap->GetMaxPlayers() <= 10)
                 sizeDifficultyEnabled = Enable10MHeroic;
+            else if (instanceMap->GetMaxPlayers() <= 15)
+                sizeDifficultyEnabled = Enable15MHeroic;
             else if (instanceMap->GetMaxPlayers() <= 25)
                 sizeDifficultyEnabled = Enable25MHeroic;
             else

@@ -654,6 +654,38 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
     if (!sABScriptMgr->OnAfterDefaultMultiplier(creature, defaultMultiplier))
         return;
 
+    // Per-stat player count multipliers
+    // Normally all stats share the same curve-based default multiplier. When player count
+    // scaling is enabled for this instance type, each stat gets its own multiplier instead,
+    // so that (for example) health can grow faster with the player count than damage does.
+    float healthCountMultiplier     = defaultMultiplier;
+    float manaCountMultiplier       = defaultMultiplier;
+    float armorCountMultiplier      = defaultMultiplier;
+    float damageCountMultiplier     = defaultMultiplier;
+    float ccDurationCountMultiplier = defaultMultiplier;
+
+    AutoBalancePlayerCountScalingSettings playerCountScalingSettings = getPlayerCountScalingSettings(instanceMap, isBossOrBossSummon(creature));
+
+    if (playerCountScalingSettings.enabled)
+    {
+        healthCountMultiplier     = getPlayerCountScalingMultiplier(map, playerCountScalingSettings.health, playerCountScalingSettings.baselinePlayers);
+        manaCountMultiplier       = getPlayerCountScalingMultiplier(map, playerCountScalingSettings.mana, playerCountScalingSettings.baselinePlayers);
+        armorCountMultiplier      = getPlayerCountScalingMultiplier(map, playerCountScalingSettings.armor, playerCountScalingSettings.baselinePlayers);
+        damageCountMultiplier     = getPlayerCountScalingDamageMultiplier(map, playerCountScalingSettings.damage, playerCountScalingSettings.baselinePlayers);
+        ccDurationCountMultiplier = getPlayerCountScalingMultiplier(map, playerCountScalingSettings.ccduration, playerCountScalingSettings.baselinePlayers);
+
+        LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | player count scaling replaces defaultMultiplier ({}) | health ({}) mana ({}) armor ({}) damage ({}) ccDuration ({})",
+            creature->GetName(),
+            creatureABInfo->selectedLevel,
+            defaultMultiplier,
+            healthCountMultiplier,
+            manaCountMultiplier,
+            armorCountMultiplier,
+            damageCountMultiplier,
+            ccDurationCountMultiplier
+        );
+    }
+
     // Stat Modifiers
     AutoBalanceStatModifiers statModifiers = getStatModifiers(map, creature);
     float statMod_global = statModifiers.global;
@@ -676,14 +708,14 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
         creatureABInfo->selectedLevel
     );
 
-    float healthMultiplier = defaultMultiplier * statMod_global * statMod_health;
+    float healthMultiplier = healthCountMultiplier * statMod_global * statMod_health;
     float scaledHealthMultiplier;
 
-    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | HealthMultiplier: ({}) = defaultMultiplier ({}) * statMod_global ({}) * statMod_health ({})",
+    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | HealthMultiplier: ({}) = healthCountMultiplier ({}) * statMod_global ({}) * statMod_health ({})",
         creature->GetName(),
         creatureABInfo->selectedLevel,
         healthMultiplier,
-        defaultMultiplier,
+        healthCountMultiplier,
         statMod_global,
         statMod_health
     );
@@ -803,14 +835,14 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
         creatureABInfo->selectedLevel
     );
 
-    float manaMultiplier = defaultMultiplier * statMod_global * statMod_mana;
+    float manaMultiplier = manaCountMultiplier * statMod_global * statMod_mana;
     float scaledManaMultiplier;
 
-    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | ManaMultiplier: ({}) = defaultMultiplier ({}) * statMod_global ({}) * statMod_mana ({})",
+    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | ManaMultiplier: ({}) = manaCountMultiplier ({}) * statMod_global ({}) * statMod_mana ({})",
         creature->GetName(),
         creatureABInfo->selectedLevel,
         manaMultiplier,
-        defaultMultiplier,
+        manaCountMultiplier,
         statMod_global,
         statMod_mana
     );
@@ -941,14 +973,14 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
         creatureABInfo->selectedLevel
     );
 
-    float armorMultiplier = defaultMultiplier * statMod_global * statMod_armor;
+    float armorMultiplier = armorCountMultiplier * statMod_global * statMod_armor;
     float scaledArmorMultiplier;
 
-    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | armorMultiplier: ({}) = defaultMultiplier ({}) * statMod_global ({}) * statMod_armor ({})",
+    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | armorMultiplier: ({}) = armorCountMultiplier ({}) * statMod_global ({}) * statMod_armor ({})",
         creature->GetName(),
         creatureABInfo->selectedLevel,
         armorMultiplier,
-        defaultMultiplier,
+        armorCountMultiplier,
         statMod_global,
         statMod_armor
     );
@@ -1044,14 +1076,14 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
         creatureABInfo->selectedLevel
     );
 
-    float damageMultiplier = defaultMultiplier * statMod_global * statMod_damage;
+    float damageMultiplier = damageCountMultiplier * statMod_global * statMod_damage;
     float scaledDamageMultiplier;
 
-    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | DamageMultiplier: ({}) = defaultMultiplier ({}) * statMod_global ({}) * statMod_damage ({})",
+    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | DamageMultiplier: ({}) = damageCountMultiplier ({}) * statMod_global ({}) * statMod_damage ({})",
         creature->GetName(),
         creatureABInfo->selectedLevel,
         damageMultiplier,
-        defaultMultiplier,
+        damageCountMultiplier,
         statMod_global,
         statMod_damage
     );
@@ -1147,8 +1179,8 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
 
     if (statMod_ccDuration != -1.0f)
     {
-        // calculate CC Duration from the default multiplier and the config settings
-        ccDurationMultiplier = defaultMultiplier * statMod_ccDuration;
+        // calculate CC Duration from the count multiplier and the config settings
+        ccDurationMultiplier = ccDurationCountMultiplier * statMod_ccDuration;
 
         // Min/Max checking
         if (ccDurationMultiplier < MinCCDurationModifier)
@@ -1172,11 +1204,11 @@ void AutoBalance_AllCreatureScript::ModifyCreatureAttributes(Creature* creature)
         );
     }
 
-    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | ccDurationMultiplier: ({}) = defaultMultiplier ({}) * statMod_ccDuration ({})",
+    LOG_DEBUG("module.AutoBalance_StatGeneration", "AutoBalance_AllCreatureScript::ModifyCreatureAttributes: Creature {} ({}) | ccDurationMultiplier: ({}) = ccDurationCountMultiplier ({}) * statMod_ccDuration ({})",
         creature->GetName(),
         creatureABInfo->selectedLevel,
         ccDurationMultiplier,
-        defaultMultiplier,
+        ccDurationCountMultiplier,
         statMod_ccDuration
     );
 

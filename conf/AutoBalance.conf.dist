@@ -42,6 +42,7 @@ AutoBalance.Enable.OtherNormal=1
 
 AutoBalance.Enable.5MHeroic=1
 AutoBalance.Enable.10MHeroic=1
+AutoBalance.Enable.15MHeroic=1
 AutoBalance.Enable.25MHeroic=1
 AutoBalance.Enable.OtherHeroic=1
 
@@ -219,6 +220,12 @@ AutoBalance.InflectionPointRaid15M.CurveFloor=
 AutoBalance.InflectionPointRaid15M.CurveCeiling=
 AutoBalance.InflectionPointRaid15M.BossModifier=
 
+### 15-player heroic raids
+AutoBalance.InflectionPointRaid15MHeroic=
+AutoBalance.InflectionPointRaid15MHeroic.CurveFloor=
+AutoBalance.InflectionPointRaid15MHeroic.CurveCeiling=
+AutoBalance.InflectionPointRaid15MHeroic.BossModifier=
+
 ### 20-player raids
 AutoBalance.InflectionPointRaid20M=
 AutoBalance.InflectionPointRaid20M.CurveFloor=
@@ -284,6 +291,242 @@ AutoBalance.InflectionPoint.Boss.PerInstance=""
 #        Offset of players inside an instance. Affects all instance types.
 #        Default:     0
 AutoBalance.playerCountDifficultyOffset=0
+
+##########################
+#
+# Stat Scaling - Player Count Scaling
+#
+##########################
+
+#     AutoBalance.PlayerCountScaling* series
+#        Per-stat scaling based on the number of players in the instance. The idea is simply: how does an
+#        instance behave with a different number of people? The most important value to scale is the enemy
+#        HP - the total throughput of the group is roughly proportional to its size, and the mechanics of
+#        the encounter are not affected by this mod. Enemy damage behaves differently: each player can only
+#        tank so much individual damage, so a nearly-full group should take almost full damage, while a
+#        group too small to have a proper composition (1-3 players) needs a steep reduction.
+#
+#        The regular InflectionPoint curve produces a SINGLE multiplier per player count which is applied to
+#        health, mana, armor, and damage alike, so those stats can never scale differently as players are
+#        added or removed. When PlayerCountScaling is enabled for an instance size, that curve is REPLACED:
+#
+#        HEALTH, MANA, ARMOR, and CCDURATION each get a WEIGHT describing how strongly the stat follows the
+#        relative player count:
+#
+#            multiplier = 1.0 + Weight * (players - BaselinePlayers) / BaselinePlayers
+#
+#            Weight 1.0 -> the stat scales proportionally with the group size (players / baseline)
+#            Weight 0.0 -> the stat is unchanged at any player count
+#
+#        DAMAGE uses a curve instead:
+#            At or above the baseline it ramps linearly from 100% (at the baseline) up to the configured
+#            `Damage` value at the instance's maximum player count (only relevant for widened instances).
+#            Below the baseline it follows the InflectionPoint-style tanh curve of a baseline-sized
+#            instance, normalized to exactly 100% at the baseline - i.e. the classic AutoBalance damage
+#            curve: barely reduced when slightly short-handed, dropping steeply for tiny groups. The curve
+#            only depends on the RELATIVE player count, so a single shape (the `DamageCurve` settings below)
+#            fits every instance size.
+#
+#        At `BaselinePlayers` players every multiplier is exactly 1.0 (original stats).
+#
+#        HEROIC AND NON-HEROIC instances of the same size deliberately SHARE these settings: the relative
+#        player count behaves the same regardless of difficulty. (The heroic base tuning itself comes from
+#        the game data.)
+#
+#        Examples with the default settings (Health weight 1.0, Damage 1.05, curve inflection 0.4):
+#
+#            15-player raid, baseline 10 (a 10-player raid widened via MapDifficulty.dbc edits):
+#                10 players: health x1.00, damage x1.00 (identical to the unmodified 10-player raid)
+#                12 players: health x1.20, damage x1.02
+#                15 players: health x1.50, damage x1.05
+#
+#            25-player raid, baseline 25 (default: the instance's maximum):
+#                25 players: health x1.00, damage x1.00 (original stats)
+#                20 players: health x0.80, damage x0.95
+#                15 players: health x0.60, damage x0.81
+#                10 players: health x0.40, damage x0.51
+#
+#            10-player raid, baseline 10:
+#                10 players: health x1.00, damage x1.00
+#                 8 players: health x0.80, damage x0.95
+#                 5 players: health x0.50, damage x0.67
+#
+#            5-player dungeon, baseline 5:
+#                 5 players: health x1.00, damage x1.00 (original stats)
+#                 4 players: health x0.80, damage x0.95
+#                 3 players: health x0.60, damage x0.81
+#                 1 player : health x0.20, damage x0.21
+#
+#        Notes:
+#          - The `AutoBalance.StatModifier*` settings, per-instance overrides, and level scaling still apply
+#            on top of these multipliers, unchanged.
+#          - While enabled, the `AutoBalance.InflectionPoint*` settings (including per-instance overrides)
+#            have no effect on maps of that instance size. Set `Enable=0` for a size to return it to the
+#            regular InflectionPoint curve behavior.
+#          - `AutoBalance.playerCountDifficultyOffset` still shifts the player count, but the count is capped
+#            at the instance's maximum player count.
+#          - The computed multipliers never go below 0 and the `AutoBalance.Min*Modifier` settings still
+#            apply on top.
+#
+#        AutoBalance.PlayerCountScaling.DamageCurve.InflectionPoint
+#           Shape of the below-baseline damage curve, as a fraction of the baseline player count. Shared by
+#           all instance sizes. Lower values keep damage higher for longer as players are removed.
+#
+#              0.4 -> ~95% damage at 80% of the baseline players, ~67% at half, ~21% at one fifth
+#              0.5 -> ~91% damage at 80% of the baseline players (the classic AutoBalance default shape)
+#
+#           Default: 0.4
+#
+#        AutoBalance.PlayerCountScaling.DamageCurve.Floor
+#           Minimum value of the below-baseline damage curve. Shared by all instance sizes. Use this if
+#           damage should never drop below a certain fraction no matter how few players are present.
+#
+#           Default: 0.0
+#
+#        Enable
+#           Enables per-stat player count scaling for this instance size (heroic and non-heroic), replacing
+#           the InflectionPoint curve.
+#
+#           Default: 1
+#
+#        BaselinePlayers
+#           The player count the content is actually tuned for - at this count all multipliers are exactly
+#           1.0 (original stats). A value of 0 means "the instance's maximum player count".
+#
+#           Default: 0 for all sizes except 15-player raids, which default to 10 (15-player raids only exist
+#           as 10-player raids widened via MapDifficulty.dbc edits, so the content is tuned for 10 players).
+#
+#        Health | Mana | Armor | CCDuration
+#           The per-stat weights described above.
+#
+#           CCDuration follows the same rules as `AutoBalance.StatModifier*.CCDuration`: it only takes effect
+#           if a CCDuration StatModifier is set for this instance size (otherwise CC durations stay unchanged).
+#
+#           Default: Health = 1.0, Mana = 0.0, Armor = 0.0, CCDuration = 0.0
+#
+#        Damage
+#           The damage multiplier at the instance's MAXIMUM player count. Only takes effect when the maximum
+#           is above the baseline (widened instances); damage ramps linearly from 100% at the baseline up to
+#           this value at a full instance. Below the baseline the DamageCurve settings apply instead.
+#
+#           Default: 1.05
+#
+#        Boss.Health | Boss.Mana | Boss.Armor | Boss.Damage | Boss.CCDuration
+#           Same as above, but for bosses (and their summons) only.
+#
+#           Default: the non-boss value of the same category
+#
+#        The per-size raid settings below inherit from the `AutoBalance.PlayerCountScalingRaid.*` defaults
+#        when left blank, so normally you only need to adjust the generic dungeon and raid values.
+#
+
+AutoBalance.PlayerCountScaling.DamageCurve.InflectionPoint=0.4
+AutoBalance.PlayerCountScaling.DamageCurve.Floor=0.0
+
+### 5-player dungeons (normal and heroic)
+AutoBalance.PlayerCountScaling.Enable=1
+AutoBalance.PlayerCountScaling.BaselinePlayers=0
+AutoBalance.PlayerCountScaling.Health=1.0
+AutoBalance.PlayerCountScaling.Mana=0.0
+AutoBalance.PlayerCountScaling.Armor=0.0
+AutoBalance.PlayerCountScaling.Damage=1.05
+AutoBalance.PlayerCountScaling.CCDuration=0.0
+
+AutoBalance.PlayerCountScaling.Boss.Health=
+AutoBalance.PlayerCountScaling.Boss.Mana=
+AutoBalance.PlayerCountScaling.Boss.Armor=
+AutoBalance.PlayerCountScaling.Boss.Damage=
+AutoBalance.PlayerCountScaling.Boss.CCDuration=
+
+### Default for all raids (normal and heroic)
+AutoBalance.PlayerCountScalingRaid.Enable=1
+AutoBalance.PlayerCountScalingRaid.BaselinePlayers=0
+AutoBalance.PlayerCountScalingRaid.Health=1.0
+AutoBalance.PlayerCountScalingRaid.Mana=0.0
+AutoBalance.PlayerCountScalingRaid.Armor=0.0
+AutoBalance.PlayerCountScalingRaid.Damage=1.05
+AutoBalance.PlayerCountScalingRaid.CCDuration=0.0
+
+AutoBalance.PlayerCountScalingRaid.Boss.Health=
+AutoBalance.PlayerCountScalingRaid.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid.Boss.CCDuration=
+
+### 10-player raids
+AutoBalance.PlayerCountScalingRaid10M.Enable=
+AutoBalance.PlayerCountScalingRaid10M.BaselinePlayers=
+AutoBalance.PlayerCountScalingRaid10M.Health=
+AutoBalance.PlayerCountScalingRaid10M.Mana=
+AutoBalance.PlayerCountScalingRaid10M.Armor=
+AutoBalance.PlayerCountScalingRaid10M.Damage=
+AutoBalance.PlayerCountScalingRaid10M.CCDuration=
+
+AutoBalance.PlayerCountScalingRaid10M.Boss.Health=
+AutoBalance.PlayerCountScalingRaid10M.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid10M.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid10M.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid10M.Boss.CCDuration=
+
+### 15-player raids (10-player raids widened via MapDifficulty.dbc - content is tuned for 10 players)
+AutoBalance.PlayerCountScalingRaid15M.Enable=
+AutoBalance.PlayerCountScalingRaid15M.BaselinePlayers=10
+AutoBalance.PlayerCountScalingRaid15M.Health=
+AutoBalance.PlayerCountScalingRaid15M.Mana=
+AutoBalance.PlayerCountScalingRaid15M.Armor=
+AutoBalance.PlayerCountScalingRaid15M.Damage=
+AutoBalance.PlayerCountScalingRaid15M.CCDuration=
+
+AutoBalance.PlayerCountScalingRaid15M.Boss.Health=
+AutoBalance.PlayerCountScalingRaid15M.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid15M.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid15M.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid15M.Boss.CCDuration=
+
+### 20-player raids
+AutoBalance.PlayerCountScalingRaid20M.Enable=
+AutoBalance.PlayerCountScalingRaid20M.BaselinePlayers=
+AutoBalance.PlayerCountScalingRaid20M.Health=
+AutoBalance.PlayerCountScalingRaid20M.Mana=
+AutoBalance.PlayerCountScalingRaid20M.Armor=
+AutoBalance.PlayerCountScalingRaid20M.Damage=
+AutoBalance.PlayerCountScalingRaid20M.CCDuration=
+
+AutoBalance.PlayerCountScalingRaid20M.Boss.Health=
+AutoBalance.PlayerCountScalingRaid20M.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid20M.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid20M.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid20M.Boss.CCDuration=
+
+### 25-player raids
+AutoBalance.PlayerCountScalingRaid25M.Enable=
+AutoBalance.PlayerCountScalingRaid25M.BaselinePlayers=
+AutoBalance.PlayerCountScalingRaid25M.Health=
+AutoBalance.PlayerCountScalingRaid25M.Mana=
+AutoBalance.PlayerCountScalingRaid25M.Armor=
+AutoBalance.PlayerCountScalingRaid25M.Damage=
+AutoBalance.PlayerCountScalingRaid25M.CCDuration=
+
+AutoBalance.PlayerCountScalingRaid25M.Boss.Health=
+AutoBalance.PlayerCountScalingRaid25M.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid25M.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid25M.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid25M.Boss.CCDuration=
+
+### 40-player raids
+AutoBalance.PlayerCountScalingRaid40M.Enable=
+AutoBalance.PlayerCountScalingRaid40M.BaselinePlayers=
+AutoBalance.PlayerCountScalingRaid40M.Health=
+AutoBalance.PlayerCountScalingRaid40M.Mana=
+AutoBalance.PlayerCountScalingRaid40M.Armor=
+AutoBalance.PlayerCountScalingRaid40M.Damage=
+AutoBalance.PlayerCountScalingRaid40M.CCDuration=
+
+AutoBalance.PlayerCountScalingRaid40M.Boss.Health=
+AutoBalance.PlayerCountScalingRaid40M.Boss.Mana=
+AutoBalance.PlayerCountScalingRaid40M.Boss.Armor=
+AutoBalance.PlayerCountScalingRaid40M.Boss.Damage=
+AutoBalance.PlayerCountScalingRaid40M.Boss.CCDuration=
 
 ##########################
 #
@@ -427,6 +670,19 @@ AutoBalance.StatModifierRaid15M.Boss.Mana=
 AutoBalance.StatModifierRaid15M.Boss.Armor=
 AutoBalance.StatModifierRaid15M.Boss.Damage=
 
+### 15-player heroic raids
+AutoBalance.StatModifierRaid15MHeroic.Global=
+AutoBalance.StatModifierRaid15MHeroic.Health=
+AutoBalance.StatModifierRaid15MHeroic.Mana=
+AutoBalance.StatModifierRaid15MHeroic.Armor=
+AutoBalance.StatModifierRaid15MHeroic.Damage=
+
+AutoBalance.StatModifierRaid15MHeroic.Boss.Global=
+AutoBalance.StatModifierRaid15MHeroic.Boss.Health=
+AutoBalance.StatModifierRaid15MHeroic.Boss.Mana=
+AutoBalance.StatModifierRaid15MHeroic.Boss.Armor=
+AutoBalance.StatModifierRaid15MHeroic.Boss.Damage=
+
 ### 20-player raids
 AutoBalance.StatModifierRaid20M.Global=
 AutoBalance.StatModifierRaid20M.Health=
@@ -554,6 +810,10 @@ AutoBalance.StatModifierRaid10MHeroic.Boss.CCDuration=
 ### 15-player raids
 AutoBalance.StatModifierRaid15M.CCDuration=
 AutoBalance.StatModifierRaid15M.Boss.CCDuration=
+
+### 15-player heroic raids
+AutoBalance.StatModifierRaid15MHeroic.CCDuration=
+AutoBalance.StatModifierRaid15MHeroic.Boss.CCDuration=
 
 ### 20-player raids
 AutoBalance.StatModifierRaid20M.CCDuration=

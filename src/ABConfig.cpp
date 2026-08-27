@@ -123,6 +123,7 @@ bool          Enable25M;
 bool          Enable40M;
 bool          Enable5MHeroic;
 bool          Enable10MHeroic;
+bool          Enable15MHeroic;
 bool          Enable25MHeroic;
 bool          EnableOtherNormal;
 bool          EnableOtherHeroic;
@@ -165,6 +166,11 @@ float         InflectionPointRaid15M;
 float         InflectionPointRaid15MCurveFloor;
 float         InflectionPointRaid15MCurveCeiling;
 float         InflectionPointRaid15MBoss;
+
+float         InflectionPointRaid15MHeroic;
+float         InflectionPointRaid15MHeroicCurveFloor;
+float         InflectionPointRaid15MHeroicCurveCeiling;
+float         InflectionPointRaid15MHeroicBoss;
 
 float         InflectionPointRaid20M;
 float         InflectionPointRaid20MCurveFloor;
@@ -238,6 +244,13 @@ float         StatModifierRaid15M_Mana;
 float         StatModifierRaid15M_Armor;
 float         StatModifierRaid15M_Damage;
 float         StatModifierRaid15M_CCDuration;
+
+float         StatModifierRaid15MHeroic_Global;
+float         StatModifierRaid15MHeroic_Health;
+float         StatModifierRaid15MHeroic_Mana;
+float         StatModifierRaid15MHeroic_Armor;
+float         StatModifierRaid15MHeroic_Damage;
+float         StatModifierRaid15MHeroic_CCDuration;
 
 float         StatModifierRaid20M_Global;
 float         StatModifierRaid20M_Health;
@@ -320,6 +333,13 @@ float         StatModifierRaid15M_Boss_Armor;
 float         StatModifierRaid15M_Boss_Damage;
 float         StatModifierRaid15M_Boss_CCDuration;
 
+float         StatModifierRaid15MHeroic_Boss_Global;
+float         StatModifierRaid15MHeroic_Boss_Health;
+float         StatModifierRaid15MHeroic_Boss_Mana;
+float         StatModifierRaid15MHeroic_Boss_Armor;
+float         StatModifierRaid15MHeroic_Boss_Damage;
+float         StatModifierRaid15MHeroic_Boss_CCDuration;
+
 float         StatModifierRaid20M_Boss_Global;
 float         StatModifierRaid20M_Boss_Health;
 float         StatModifierRaid20M_Boss_Mana;
@@ -347,3 +367,101 @@ float         StatModifierRaid40M_Boss_Mana;
 float         StatModifierRaid40M_Boss_Armor;
 float         StatModifierRaid40M_Boss_Damage;
 float         StatModifierRaid40M_Boss_CCDuration;
+
+//
+// PlayerCountScaling*
+//
+
+float         PlayerCountScalingDamageCurveInflectionPoint;
+float         PlayerCountScalingDamageCurveFloor;
+
+bool          PlayerCountScaling_Enable;
+uint32        PlayerCountScaling_BaselinePlayers;
+float         PlayerCountScaling_Health;
+float         PlayerCountScaling_Mana;
+float         PlayerCountScaling_Armor;
+float         PlayerCountScaling_Damage;
+float         PlayerCountScaling_CCDuration;
+float         PlayerCountScaling_Boss_Health;
+float         PlayerCountScaling_Boss_Mana;
+float         PlayerCountScaling_Boss_Armor;
+float         PlayerCountScaling_Boss_Damage;
+float         PlayerCountScaling_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid_Enable;
+uint32        PlayerCountScalingRaid_BaselinePlayers;
+float         PlayerCountScalingRaid_Health;
+float         PlayerCountScalingRaid_Mana;
+float         PlayerCountScalingRaid_Armor;
+float         PlayerCountScalingRaid_Damage;
+float         PlayerCountScalingRaid_CCDuration;
+float         PlayerCountScalingRaid_Boss_Health;
+float         PlayerCountScalingRaid_Boss_Mana;
+float         PlayerCountScalingRaid_Boss_Armor;
+float         PlayerCountScalingRaid_Boss_Damage;
+float         PlayerCountScalingRaid_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid10M_Enable;
+uint32        PlayerCountScalingRaid10M_BaselinePlayers;
+float         PlayerCountScalingRaid10M_Health;
+float         PlayerCountScalingRaid10M_Mana;
+float         PlayerCountScalingRaid10M_Armor;
+float         PlayerCountScalingRaid10M_Damage;
+float         PlayerCountScalingRaid10M_CCDuration;
+float         PlayerCountScalingRaid10M_Boss_Health;
+float         PlayerCountScalingRaid10M_Boss_Mana;
+float         PlayerCountScalingRaid10M_Boss_Armor;
+float         PlayerCountScalingRaid10M_Boss_Damage;
+float         PlayerCountScalingRaid10M_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid15M_Enable;
+uint32        PlayerCountScalingRaid15M_BaselinePlayers;
+float         PlayerCountScalingRaid15M_Health;
+float         PlayerCountScalingRaid15M_Mana;
+float         PlayerCountScalingRaid15M_Armor;
+float         PlayerCountScalingRaid15M_Damage;
+float         PlayerCountScalingRaid15M_CCDuration;
+float         PlayerCountScalingRaid15M_Boss_Health;
+float         PlayerCountScalingRaid15M_Boss_Mana;
+float         PlayerCountScalingRaid15M_Boss_Armor;
+float         PlayerCountScalingRaid15M_Boss_Damage;
+float         PlayerCountScalingRaid15M_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid20M_Enable;
+uint32        PlayerCountScalingRaid20M_BaselinePlayers;
+float         PlayerCountScalingRaid20M_Health;
+float         PlayerCountScalingRaid20M_Mana;
+float         PlayerCountScalingRaid20M_Armor;
+float         PlayerCountScalingRaid20M_Damage;
+float         PlayerCountScalingRaid20M_CCDuration;
+float         PlayerCountScalingRaid20M_Boss_Health;
+float         PlayerCountScalingRaid20M_Boss_Mana;
+float         PlayerCountScalingRaid20M_Boss_Armor;
+float         PlayerCountScalingRaid20M_Boss_Damage;
+float         PlayerCountScalingRaid20M_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid25M_Enable;
+uint32        PlayerCountScalingRaid25M_BaselinePlayers;
+float         PlayerCountScalingRaid25M_Health;
+float         PlayerCountScalingRaid25M_Mana;
+float         PlayerCountScalingRaid25M_Armor;
+float         PlayerCountScalingRaid25M_Damage;
+float         PlayerCountScalingRaid25M_CCDuration;
+float         PlayerCountScalingRaid25M_Boss_Health;
+float         PlayerCountScalingRaid25M_Boss_Mana;
+float         PlayerCountScalingRaid25M_Boss_Armor;
+float         PlayerCountScalingRaid25M_Boss_Damage;
+float         PlayerCountScalingRaid25M_Boss_CCDuration;
+
+bool          PlayerCountScalingRaid40M_Enable;
+uint32        PlayerCountScalingRaid40M_BaselinePlayers;
+float         PlayerCountScalingRaid40M_Health;
+float         PlayerCountScalingRaid40M_Mana;
+float         PlayerCountScalingRaid40M_Armor;
+float         PlayerCountScalingRaid40M_Damage;
+float         PlayerCountScalingRaid40M_CCDuration;
+float         PlayerCountScalingRaid40M_Boss_Health;
+float         PlayerCountScalingRaid40M_Boss_Mana;
+float         PlayerCountScalingRaid40M_Boss_Armor;
+float         PlayerCountScalingRaid40M_Boss_Damage;
+float         PlayerCountScalingRaid40M_Boss_CCDuration;

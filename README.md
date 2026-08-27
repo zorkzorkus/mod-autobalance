@@ -1,5 +1,10 @@
 # ![logo](https://raw.githubusercontent.com/azerothcore/azerothcore.github.io/master/images/logo-github.png) AzerothCore
 
+## Fork changes
+
+- Includes a custom 15-player heroic setting, this is utilized for a custom MapDifficulty.dbc to allow up to 15 players in Wotlk 10-player raids.
+- Difficulty scaling (HP, damage, etc...) can be set individually for a per-player scaling. This allows raids to scale for example to 70% HP with 7/10 players or 150% HP with 15/10 players (custom MapDifficulty.dbc), while keeping the damage near 100%
+
 ## Beta testing warning
 
 The current version of the master branch is currently in beta, under testing to ensure all the functionalities are working properly.
@@ -14,8 +19,6 @@ This module is intended to scale based on number of players, instance mobs and b
 **NOTE:** This module requires at least [this commit](https://github.com/azerothcore/azerothcore-wotlk/commit/f127e583aae3cfa51a77d056c1892a7de07ffb52) of AzerothCore in order to work correctly. Older versions are not supported.
 
 All settings are well-described in the configuration file.
-
-**PLEASE** include the output from the `.ab mapstat` and `.ab creaturestat` commands (while targeting a problematic creature) when reporting issues. This will help us to quickly identify the problem and provide a solution.
 
 ## In-game Commands
 | Command | Permission | Description |
